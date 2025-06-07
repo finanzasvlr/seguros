@@ -23,7 +23,7 @@ cols = ['age', 'sex', 'bmi', 'children', 'smoker', 'region']
 def home():
     return render_template("home.html")
 
-# Definir la ruta de salud para verificar que la API está funcionando
+# Definir la ruta para verificar la salud de la API
 @app.route('/health', methods=["GET"])
 def health():
     return "HEALTH OK"
