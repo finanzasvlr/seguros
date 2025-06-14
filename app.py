@@ -1,53 +1,54 @@
 # Importar las librerías necesarias
-# Importar flask para crear la API
-from flask import Flask,request, url_for, redirect, render_template, jsonify
-# Importar las funciones de pycaret para cargar el modelo y hacer predicciones
-from pycaret.regression import *
-# Importar pandas para manejar los datos
+from flask import Flask, request, render_template, jsonify
+from pycaret.regression import load_model, predict_model
 import pandas as pd
-# Importar pickle para cargar el modelo guardado
-import pickle
-# Importar numpy para manejar arrays
 import numpy as np
 
-# app es la instancia de Flask que se usará para crear la API
+# Crear la instancia de la aplicación Flask
 app = Flask(__name__)
 
-# Cargar el modelo previamente guardado
+# Cargar el modelo previamente entrenado
 model = load_model('deployment_20231111')
-# Definir las columnas que se usarán para las predicciones
+
+# Columnas esperadas por el modelo
 cols = ['age', 'sex', 'bmi', 'children', 'smoker', 'region']
 
-# Definir la ruta principal de la aplicación
+# 🔧 Nueva función reutilizable para predicción (útil para tests y API)
+def predict_charge(dataframe):
+    """
+    Esta función recibe un DataFrame con los datos del paciente y devuelve
+    la predicción del modelo (el costo del seguro).
+    """
+    prediction = predict_model(model, data=dataframe)
+    return prediction['Label'][0]
+
+# Página principal
 @app.route('/')
 def home():
     return render_template("home.html")
 
-# Definir la ruta para verificar la salud de la API
+# Verificación de salud de la API
 @app.route('/health', methods=["GET"])
 def health():
     return "HEALTH OK"
 
-# Definir la ruta para hacer predicciones
-@app.route('/predict',methods=['POST'])
+# Predicción desde formulario HTML
+@app.route('/predict', methods=['POST'])
 def predict():
     int_features = [x for x in request.form.values()]
     final = np.array(int_features)
-    data_unseen = pd.DataFrame([final], columns = cols)
-    prediction = predict_model(model, data=data_unseen, round = 0)
-    print(prediction)
-    prediction = int(prediction.loc[0, 'prediction_label'])
-    return render_template('home.html',pred='Expected Bill will be ${} anually'.format(prediction))
+    data_unseen = pd.DataFrame([final], columns=cols)
+    result = predict_charge(data_unseen)
+    return render_template('home.html', pred=f'Expected Bill will be ${int(result)} annually')
 
-# Definir la ruta para hacer predicciones a través de una API
-@app.route('/predict_api',methods=['POST'])
+# Predicción desde JSON (API)
+@app.route('/predict_api', methods=['POST'])
 def predict_api():
     data = request.get_json(force=True)
     data_unseen = pd.DataFrame([data])
-    prediction = predict_model(model, data=data_unseen)
-    output = prediction.Label[0]
-    return jsonify(output)
+    result = predict_charge(data_unseen)
+    return jsonify(result)
 
-# Definir la ruta para hacer predicciones a través de un archivo CSV
+# Ejecutar la aplicación localmente
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
