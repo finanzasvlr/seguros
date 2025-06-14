@@ -20,7 +20,7 @@ def predict_charge(dataframe):
     la predicción del modelo (el costo del seguro).
     """
     prediction = predict_model(model, data=dataframe)
-    return prediction['Label'][0]
+    return prediction['prediction_label'][0]  # ← aquí está el cambio importante
 
 # Página principal
 @app.route('/')
