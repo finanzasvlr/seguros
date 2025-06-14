@@ -1,0 +1,36 @@
+# Este archivo define un workflow de GitHub Actions llamado "CI/CD Pipeline Seguro"
+# Su propósito es: al hacer push en la rama main, correr tests automáticos.
+
+name: CI/CD Pipeline Seguro
+
+# Configura el workflow para que se ejecute cuando hagas un push en la rama main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:  # Definimos un job llamado "test"
+    runs-on: ubuntu-latest  # El job se ejecuta en una máquina virtual con Ubuntu (última versión estable)
+
+    steps:
+      # Paso 1: Clonar el código del repositorio en la máquina virtual de GitHub Actions
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      # Paso 2: Configurar Python (versión 3.9 en este caso) en el entorno de la máquina virtual
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'  # Aquí especificamos la versión de Python que queremos usar
+
+      # Paso 3: Instalar las dependencias necesarias para el proyecto y para ejecutar los tests
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip  # Actualiza el gestor de paquetes pip
+          pip install -r requirements.txt      # Instala las dependencias del proyecto que están en requirements.txt
+          pip install pytest                   # Instala pytest, herramienta que se usa para correr los tests
+
+      # Paso 4: Ejecutar los tests con pytest
+      - name: Ejecutar tests
+        run: pytest  # Busca y ejecuta todos los archivos que empiecen con test_ o terminen en _test.py
